@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+
+<!--
+  Google HTML5 slide template
+
+  Authors: Luke Mahé (code)
+           Marcin Wichary (code and design)
+
+           Dominic Mazzoni (browser compatibility)
+           Charles Chen (ChromeVox support)
+
+  URL: http://code.google.com/p/html5slides/
+-->
+
+<html>
+  <head>
+    <title>Hacking Day</title>
+
+    <meta charset='utf-8'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="../styles.css">
+    <script src='../slides.js'></script>
+  </head>
+
+  <style>
+    /* Your individual styles here, or just use inline styles if that’s
+       what you want. */
+
+
+  </style>
+
+  <body style='display: none'>
+
+    <section class='slides layout-regular template-default'>
+
+      <!-- Your slides (<article>s) go here. Delete or comment out the
+           slides below. -->
+      <article class='biglogo'>
+
+      </article>
+      <article>
+        <h1>
+          Firefox OS
+        </h1>
+        <p>
+          <b>Salamanca</b> hoy disfruta de Firefox OS!!!
+        </p>
+      </article>
+
+      <article>
+        <h3>
+          A programar se ha dicho!!!
+        </h3>
+        <ul>
+          <li>Vamos a crear nuestro primer juego en Firefox OS:</li>
+          <ul>
+            <li>Un sencillo puzzle de fotos almacendas o tomadas desde el móvil</li>
+            <li>Usaremos canvas, transformaciones de traslación, escalado, etc... exprimiendo CSS3</li>
+          </ul>
+
+          <li>Aunque antes necesitamos un poco más de contexto...</li>
+        </ul>
+        <p style="text-align: center; margin-top: 40px">
+          <img src="images/icon.png"></img>
+        </p>
+      </article>
+
+      <article>
+        <h1>
+          Formatos de aplicación
+        </h1>
+        <p>
+          Hosteadas vs Empaquetadas
+        </p>
+      </article>
+
+      <article>
+        <h3>
+          Web Apps hosteadas
+        </h3>
+        <ul>
+          <li>Una website más un manifiesto</li>
+          <li>Una aplicación por origen</li>
+          <li>Los recursos pueden ser cacheados (appcache) para el offline</li>
+          <li>Los privilegios son muy similares a cualquier contenido web:</li>
+          <ul>
+            <li>Mayor parte de APIs nativas via Web Activities</li>
+          </ul>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Web Apps empaquetadas
+        </h3>
+        <ul>
+          <li>Recursos en un paquete zip</li>
+          <li>Aplicaciones verificadas por un app store</li>
+          <li>Apps serán aprobadas despues de una revisión de código o algun proceso equivalente de seguridad</li>
+        </ul>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          El manifiesto de nuestro juego
+        </h3>
+        <section>
+          <pre>
+{
+  "name": "Puzzle",
+  "description": "Puzzle Game",
+  "permissions": {
+    "settings":{ "access": "readonly" }
+  },
+  "launch_path": "/index.html",
+  "developer": {
+    "name": "Cristian Rodríguez de la Cruz"
+  },
+  "locales": {
+    "en-US": { "name": "Puzzle", "description": "Puzzle Game" }
+  },
+  "default_locale": "en-US",
+  "icons": {
+    "60": "/style/icons/puzzle.png"
+  },
+  "orientation": "portrait-primary"
+}</pre>
+        <p><a href="https://developer.mozilla.org/en-US/docs/Apps/Manifest">App manifest en MDN</a></p>
+        <p><a href="https://marketplace.firefox.com/developers/validator">Validador</a></p>
+        </section>
+      </article>
+
+      <article>
+        <h3>
+          Instalando app hosteada
+        </h3>
+        <pre>var installApp = navigator.mozApps.install(manifestURL);
+
+// Successful install
+installApp.onsuccess = function(data) {
+  console.log("Success, app installed!");
+};
+
+// Install failed
+installApp.onerror = function() {
+  console.log("Install failed\n\n:" + installApp.error.name);
+};</pre>
+      </article>
+
+      <article>
+        <h3>
+          Instalando app empaquetada
+        </h3>
+        <ul>
+          <li>Paso 1: empaquetar en un zip todo el contenido incluyendo el manifiesto</li>
+          <li>Paso 2: crear un mini manifiesto</li>
+        </ul>
+        <pre>{
+  "name": "Puzzle Game",
+  "package_path" : "http://www.tid.es/puzzleGame.zip",
+  "version": "1",
+  "developer": {
+    "name": "Cristian Rodríguez de la Cruz"
+  }
+}</pre>
+        <pre>var installApp = navigator.mozApps.installPackage(miniManifestURL);</pre>
+      </article>
+
+      <article>
+        <h1>
+          Tipos de aplicación
+        </h1>
+        <p>
+          Web, instaladas, privilegiadas y certificadas
+        </p>
+      </article>
+
+      <article>
+        <h3>
+          ¿Quién es quien?
+        </h3>
+        <ul>
+          <li><strong style="color: orange">Contenido Web</strong></li>
+          <li>Web Apps <strong style="color: orange">Instaladas</strong>: contenido web instalado pero no verificado</li>
+          <li>Web Apps <strong style="color: orange">Empaquetadas</strong>:
+            <ul>
+              <li><strong style="color: orange">Privilegiadas:</strong> contenido web estático revisado e instaladado por un trusted app store</li>
+              <li><strong style="color: orange">Certificadas:</strong> contenido web estático instalado por el vendor y OEM</li>
+            </ul>
+          </li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Tipo de permisos: "Implícito vs Explícito"
+        </h3>
+        <ul>
+          <li><strong style="color: orange">Explícito</strong>: El usuario debe garantizar el permiso. Declarado en manifiesto pero garantizado en ejecución (Geolication, Contacts, ...)</li>
+          <li><strong style="color: orange">Implícito</strong>: Permiso garantizado por su naturaleza. Revisado por el app store</li>
+        </ul>
+        <h3>
+          ¿Qué permisos para que aplicaciones?
+        </h3>
+        <ul>
+          <li><strong style="color: orange">Web</strong>: Geolocation, Fullscreen</li>
+          <li><strong style="color: orange">Instaladas</strong>: Sensor API, Alarm API, FM Radio</li>
+          <li><strong style="color: orange">Privilegiadas</strong>: Camera API, Alarm API, TCP Socket, Contacts API, Device Storage API, Browser API, WiFi Information API</li>
+          <li><strong style="color: orange">Certificadas</strong>: Background services, WebSMS, WebTelephony, WebBluetooth, MobileConnection API, PowerManagement API, Push Notifications API, Settings API, Permissions</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Avanzando...
+        </h3>
+        <ul>
+          <li><a href="https://wiki.mozilla.org/Apps/Security">https://wiki.mozilla.org/Apps/Security</a></li>
+        </ul>
+      </article>
+
+      <article>
+        <h1>
+          Nuesto puzzle dentro de FOS
+        </h1>
+        <ul>
+          <p>Web Acticities: "pick"</p>
+          <p>APIs nativas: Vibración</p>
+          <p>Librerías: Multi-idioma</p>
+        </ul>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          Actividad "pick" de tipo "image/jpeg"
+        </h3>
+        <section>
+          <pre>
+var activity = new MozActivity({
+  name: 'pick',
+  data: {
+    type: 'image/jpeg',
+    width: window.innerWidth - (2 * Game.rows),
+    height: window.innerHeight - OFFSET_TOP - (2 * Game.rows)
+  }
+});
+
+activity.onsuccess = function success() {
+  Game.start(URL.createObjectURL(this.result.blob), function done() {
+    gameView.dataset.pagePosition = 'viewport';
+  });
+};
+
+activity.onerror = function error() {
+  window.console.error('Error picking a picture: ', activity.error);
+};</pre>
+        </section>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          Vibration API
+        </h3>
+        <section>
+          <pre>
+var vibrate = (function vibrateWrapper() {
+  return 'vibrate' in navigator ? function(t) { navigator.vibrate(t) } :
+                                  function()  { /* simulator */ };
+})();
+
+if (sourceTile.dataset.position === targetIndex.toString()) {
+  vibrate([100]);
+  // 100ms. E.g. [200, 100, 200] -> This vibrates the device for 200ms, then
+  // pauses for 100ms before vibrating the device again for another 200ms
+}</pre>
+          <p><a href="https://developer.mozilla.org/en/docs/DOM/window.navigator.vibrate">https://developer.mozilla.org/en/docs/DOM/window.navigator.vibrate</a></p>
+        </section>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          Multi-idioma (recursos & definición)
+        </h3>
+        <section>
+          <pre>
+&lt;!-- Localization --&gt;
+&lt;link rel="resource" type="application/l10n" href="locales/locales.ini"&gt;
+&lt;script type="application/javascript" src="js/l10n.js"&gt;&lt;/script&gt;</pre>
+<p><a href="https://github.com/mozilla-b2g/gaia/blob/master/shared/js">https://github.com/mozilla-b2g/gaia/blob/master/shared/js</a></p>
+          <pre>
+@import url(puzzle.en-US.properties)
+[es]
+@import url(puzzle.es.properties)
+[fr]
+@import url(puzzle.fr.properties)</pre>
+
+          <pre>
+game-title = Puzzle Game
+difficulty-msg = The difficulty is {{difficulty}}</pre>
+
+          <pre>
+game-title = El juego del Puzzle
+difficulty-msg = La dificultad es {{difficulty}}</pre>
+        </section>
+      </article>
+
+      <article>
+        <h3>
+          Multi-idioma (API)
+        </h3>
+        <section>
+          <ul>
+            <li>HTML</li>
+          </ul>
+          <pre>
+&lt;h1 data-l10n-id="game-title"&gt;Puzzle Game&lt;/h1&gt;</pre>
+          <ul>
+            <li>Javascript</li>
+          </ul>
+          <pre>
+var _ = navigator.mozL10n.get;
+var message = _('difficulty-msg', { difficulty: 7 });</pre>
+
+          <pre>
+navigator.mozL10n.ready(function localize() {
+  // La UI ha sido traducida
+});</pre>
+        </section>
+      </article>
+
+      <article>
+        <h1>
+          Nuestro puzzle con sabor Firefox OS (Building Blocks)
+        </h1>
+        <ul> <!--class="build"-->
+          <p>Componentes en HTML + CSS para manetener consistencia visual</p>
+          <p>Accesibilidad - Utilizan roles aria</p>
+          <p>Aceleran el desarrollo de la app</p>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          ¿Qué necesitamos para nuestro juego?
+        </h3>
+        <ul style="float: left; width: 50%">
+          <li>Cabeceras</li>
+          <li>Botones</li>
+          <li>Listas</li>
+          <li>Selectores</li>
+        </ul>
+        <img style="float: right; margin-top: 20px" src="images/puzzle 1.png"></img>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          BB - Cabeceras
+        </h3>
+        <pre>&lt;link rel="stylesheet" type="text/css" href="style/headers.css"&gt;</pre>
+        <pre>&lt;header&gt;
+  &lt;menu type="toolbar"&gt;
+    &lt;a href="#" id="settings-open"&gt;
+      &lt;span class="icon icon-settings" data-l10n-id="settings"&gt;
+        Settings
+      &lt;/span&gt;
+    &lt;/a&gt;
+  &lt;/menu&gt;
+  &lt;h1 data-l10n-id="game-title">Puzzle Game&lt;/h1&gt;
+&lt;/header&gt;</pre>
+
+      <pre>section[role="region"] > header .icon.icon-settings {
+  background-image: url(images/settings.png);
+}</pre>
+      <p style="text-align: center">
+          <img src="images/header.png"></img>
+        </p>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          BB - Botones
+        </h3>
+        <pre>&lt;link rel="stylesheet" type="text/css" href="style/buttons.css"&gt;</pre>
+        <pre>&lt;button id="play-button" data-l10n-id="game-start"&gt;Start New Puzzle!&lt;/button&gt;</pre>
+        <pre>#play-button {
+  border: .2rem solid #ccc9c9;
+  box-shadow: 0 .3rem .4rem rgba(0,0,0,.49);
+  background-image: linear-gradient(bottom, #cbcbcb 0%, #fbfbfb 100%);
+  color: #333;
+  margin-top: 15rem;
+  height: 6rem;
+  font: 500 2.6rem/6rem 'MozTT', Sans-serif;
+  width: auto;
+  border-radius: .5rem;
+  text-shadow: .1rem .1rem 0 rgba(0,0,0,0.3);
+}</pre>
+        <p style="text-align: center">
+          <img src="images/button.png"></img>
+        </p>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          BB - Listas y switches
+        </h3>
+        <pre>&lt;link rel="stylesheet" type="text/css" href="style/list.css"&gt;
+&lt;link rel="stylesheet" type="text/css" href="style/switches.css"&gt;</pre>
+        <pre>&lt;header&gt;
+  &lt;h2 data-l10n-id="level">Difficulty level&lt;/h2&gt;
+&lt;/header&gt;
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;label&gt;
+      &lt;input type="radio" name="level" value="2" /&gt;
+      &lt;span>&lt;/span&gt;
+    &lt;/label&gt;
+    &lt;a data-l10n-id="level-beginner">Beginner&lt;/a&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;label&gt;
+      &lt;input type="radio" name="level" value="3" /&gt;
+      &lt;span>&lt;/span&gt;
+    &lt;/label&gt;
+    &lt;a data-l10n-id="level-intermediate">Intermediate&lt;/a&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</pre>
+      </article>
+
+      <article class='smaller'>
+        <h3>
+          BB - Listas y switches II
+        </h3>
+        <pre>ul {
+  margin: 0; padding: 0;
+  overflow: hidden; list-style: none;
+}
+
+ul li {
+  position: relative; border-bottom: 0.1rem solid #e6e6e3;
+ -moz-box-sizing: border-box; min-height: 6rem; color: #000;
+}
+
+ul li > a {
+  display: block; text-decoration: none;
+  outline: 0; color: #000;
+  -moz-box-sizing: border-box; height: 6rem;
+  font-size: 2.1rem; line-height: 6rem; padding: 0 3rem;
+}
+
+ul li > label:not([for]) {
+  top: 0; left: 0; position: absolute;
+  width: 100%; height: 100%;
+}
+
+ul li > label:not([for]) > span {
+  left: auto; right: 3rem;
+}</pre>
+      </article>
+
+      <article>
+        <h3>
+          BB - Listas y switches III
+        </h3>
+
+        <p style="text-align: center">
+          <img style="width: 320px" src="images/lists.png"></img>
+        </p>
+      </article>
+
+      <article>
+        <h3>
+          Código fuente del juego
+        </h3>
+
+        <ul>
+          <li><a href="https://github.com/crdlc/puzzle">https://github.com/crdlc/puzzle</a></li>
+        </ul>
+        <p style="text-align: center">
+        <img style="width: 280px" src="images/game 1.png"></img>
+        <img style="width: 280px; margin-left: 40px" src="images/game 2.png"></img>
+        </p>
+      </article>
+
+      <article class='biglogo2'>
+
+      </article>
+    </section>
+
+  </body>
+</html>
